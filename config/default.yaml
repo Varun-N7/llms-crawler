@@ -1,0 +1,38 @@
+crawl:
+  max_depth: 3
+  max_pages: 500
+  max_pages_per_domain: 100
+  concurrent_requests: 16
+  concurrent_requests_per_domain: 4
+  download_timeout: 30
+  rate_limit_per_domain: 2.0        # requests/sec
+  store_raw_html: true
+  follow_external_links: false       # stay on seed domain by default
+
+playwright:
+  enabled: true
+  forced_domains: []                 # always use playwright for these
+  wait_for_selector: null
+  min_words_threshold: 50            # trigger playwright if HTTP yields fewer words
+  navigation_timeout_ms: 15000
+
+robots:
+  obey: true
+  cache_ttl_seconds: 3600
+
+dedup:
+  normalize_urls: true
+  strip_params:
+    - utm_source
+    - utm_medium
+    - utm_campaign
+    - utm_content
+    - utm_term
+    - fbclid
+    - gclid
+    - ref
+    - source
+
+storage:
+  db_path: "crawl.db"
+  compress_html: true

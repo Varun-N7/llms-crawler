@@ -1,0 +1,7 @@
+crawl:
+  max_depth: 5
+  max_pages: 1000
+  follow_external_links: false
+
+playwright:
+  min_words_threshold: 30
