@@ -1,13 +1,13 @@
-# 🕷️ LLMs Web Crawler — Day 1
+# 🕷️ LLMs Web Crawler — Day 2
 
-A production-grade web crawler built with **Scrapy + Playwright** that crawls websites and stores clean, deduplicated content in a local SQLite database.
+Builds on Day 1 by adding **content processing pipelines** and **`llms.txt` generation** — transforming raw crawled HTML into clean, structured content ready for LLM consumption.
 
 ---
 
-## 📁 Project Structure
+## 📁 Project Structures
 
 ```
-day1/
+day2/
 ├── config/
 │   ├── default.yaml              # Main crawler config
 │   └── profiles/
@@ -22,15 +22,24 @@ day1/
 │   │   ├── retry_middleware.py        # Auto-retry on failure
 │   │   └── robots_middleware.py       # robots.txt compliance
 │   ├── pipelines/
+│   │   ├── classify_pipeline.py  # Content classification  ⭐ NEW
+│   │   ├── content_pipeline.py   # Content extraction      ⭐ NEW
 │   │   ├── dedup_pipeline.py     # URL deduplication
 │   │   └── storage_pipeline.py   # SQLite storage
 │   ├── spiders/
 │   │   ├── base_spider.py        # Base spider class
 │   │   └── universal_spider.py   # Main crawl spider
 │   └── settings.py               # Scrapy settings
+├── processor/                    # ⭐ NEW
+│   ├── classifier.py             # Page type classifier
+│   ├── cleaner.py                # HTML cleaner
+│   ├── extractor.py              # Content extractor
+│   ├── llmstxt_builder.py        # llms.txt builder
+│   └── pdf_extractor.py          # PDF content extraction
 ├── storage/
 │   ├── db.py                     # DB connection & queries
 │   └── schema.sql                # SQLite schema
+├── generate_llmstxt.py           # ⭐ NEW — CLI to generate llms.txt
 ├── run_crawler.py                # CLI entry point
 ├── requirements.txt
 └── scrapy.cfg
@@ -47,13 +56,17 @@ day1/
 - **robots.txt compliance** — obeys crawl rules by default
 - **URL deduplication** — strips tracking params (UTM, fbclid, gclid, etc.)
 - **SQLite storage** — saves compressed raw HTML locally
+- **Content pipeline** — extracts clean text from raw HTML after crawling ⭐ NEW
+- **Classify pipeline** — identifies page types (blog, docs, landing page, etc.) ⭐ NEW
+- **PDF extraction** — pulls text content from PDF files found during crawl ⭐ NEW
+- **llms.txt generator** — produces compact and full-content output files ⭐ NEW
 
 ---
 
 ## ⚙️ Installation
 
 ```bash
-cd day1
+cd day2
 pip install -r requirements.txt
 
 # Install Playwright browser (needed for JS rendering)
@@ -64,7 +77,7 @@ playwright install chromium
 
 ## 🧪 Usage
 
-### Basic Crawl
+### Step 1: Run the Crawler
 
 ```bash
 python run_crawler.py --url https://example.com
@@ -88,6 +101,23 @@ python run_crawler.py --url https://example.com --db my_crawl.db
 # Disable Playwright (faster, skips JS rendering)
 python run_crawler.py --url https://example.com --no-playwright
 ```
+
+### Step 2: Generate llms.txt
+
+```bash
+# Generate both llms.txt and llms-full.txt
+python generate_llmstxt.py --db crawl.db --out ./output
+
+# Validate an existing llms.txt
+python generate_llmstxt.py --db crawl.db --validate-only
+```
+
+This produces two files:
+
+| File | Description |
+|------|-------------|
+| `llms.txt` | Compact index of all crawled pages (titles + URLs) |
+| `llms-full.txt` | Full content of every crawled page for LLM ingestion |
 
 ---
 
@@ -120,7 +150,12 @@ Use pre-built profiles from `config/profiles/`:
 
 ## 🗄️ Storage
 
-Crawled data is saved to a **SQLite database** (`crawl.db` by default). The schema is defined in `storage/schema.sql`.
+Crawled and processed data is saved to a **SQLite database** (`crawl.db` by default). The schema is defined in `storage/schema.sql`.
+
+```bash
+python run_crawler.py --url https://example.com --db my_crawl.db
+python generate_llmstxt.py --db my_crawl.db --out ./output
+```
 
 ---
 

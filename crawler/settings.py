@@ -57,6 +57,8 @@ DOWNLOADER_MIDDLEWARES = {
 
 ITEM_PIPELINES = {
     "crawler.pipelines.dedup_pipeline.DedupPipeline": 100,
+    "crawler.pipelines.content_pipeline.ContentPipeline": 300,
+    "crawler.pipelines.classify_pipeline.ClassifyPipeline": 400,
     "crawler.pipelines.storage_pipeline.StoragePipeline": 900,
 }
 
