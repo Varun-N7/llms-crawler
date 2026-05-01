@@ -1,53 +1,55 @@
-# 🕷️ LLMs Web Crawler — Day 2
+# LLMs Web Crawler
 
-Builds on Day 1 by adding **content processing pipelines** and **`llms.txt` generation** — transforming raw crawled HTML into clean, structured content ready for LLM consumption.
+A production-grade web crawler built with **Scrapy + Playwright** that crawls websites, processes content, generates `llms.txt` files, and provides a **live monitoring dashboard** for real-time visibility.
 
 ---
 
-## 📁 Project Structures
+## Quick Start
 
-```
-day2/
-├── config/
-│   ├── default.yaml              # Main crawler config
-│   └── profiles/
-│       ├── blog.yaml             # Profile for blog sites
-│       └── docs_site.yaml        # Profile for documentation sites
-├── crawler/
-│   ├── extensions/
-│   │   └── stats_extension.py    # Crawl stats tracking
-│   ├── middlewares/
-│   │   ├── playwright_middleware.py   # JS rendering fallback
-│   │   ├── ratelimit_middleware.py    # Per-domain rate limiting
-│   │   ├── retry_middleware.py        # Auto-retry on failure
-│   │   └── robots_middleware.py       # robots.txt compliance
-│   ├── pipelines/
-│   │   ├── classify_pipeline.py  # Content classification  ⭐ NEW
-│   │   ├── content_pipeline.py   # Content extraction      ⭐ NEW
-│   │   ├── dedup_pipeline.py     # URL deduplication
-│   │   └── storage_pipeline.py   # SQLite storage
-│   ├── spiders/
-│   │   ├── base_spider.py        # Base spider class
-│   │   └── universal_spider.py   # Main crawl spider
-│   └── settings.py               # Scrapy settings
-├── processor/                    # ⭐ NEW
-│   ├── classifier.py             # Page type classifier
-│   ├── cleaner.py                # HTML cleaner
-│   ├── extractor.py              # Content extractor
-│   ├── llmstxt_builder.py        # llms.txt builder
-│   └── pdf_extractor.py          # PDF content extraction
-├── storage/
-│   ├── db.py                     # DB connection & queries
-│   └── schema.sql                # SQLite schema
-├── generate_llmstxt.py           # ⭐ NEW — CLI to generate llms.txt
-├── run_crawler.py                # CLI entry point
-├── requirements.txt
-└── scrapy.cfg
+```bash
+pip install -r requirements.txt
+playwright install chromium
+python dashboard/app.py
+python run_crawler.py --url https://example.com
+python generate_llmstxt.py --db crawl.db --out ./output
 ```
 
 ---
 
-## 🚀 Features
+## Prerequisites
+
+- Python 3.8+
+- pip
+- Chromium (installed via Playwright)
+
+---
+
+## Dashboard Components
+
+### `app.py` — Main Dashboard App
+The entry point for the dashboard. Initializes and wires together all components, manages the overall layout, and starts the live update loop.
+
+### `state.py` — State Management
+Handles the global dashboard state — tracks crawl progress, page counts, active URLs, and export status across all components in real time.
+
+### `live_monitor.py` — Live Crawl Monitor
+Shows real-time crawl activity as it happens — displays pages being crawled, success/failure status, crawl speed, and progress towards the page limit.
+
+### `url_table.py` — URL Table
+A browsable table of all crawled URLs with metadata like page title, status code, word count, and content type. Supports filtering and sorting.
+
+### `content_preview.py` — Content Preview
+Click any URL in the table to preview the extracted clean text content for that page — useful for verifying crawl quality before generating `llms.txt`.
+
+### `control_panel.py` — Control Panel
+Start, stop, and configure crawls directly from the UI — set the seed URL, depth, page limit, and profile without touching the terminal.
+
+### `export_panel.py` — Export Panel
+Generate and download `llms.txt` and `llms-full.txt` directly from the dashboard with a single click once the crawl is complete.
+
+---
+
+## Features
 
 - **Universal spider** — crawls any website with configurable depth and page limits
 - **Playwright fallback** — automatically uses headless browser for JavaScript-heavy pages
@@ -56,17 +58,17 @@ day2/
 - **robots.txt compliance** — obeys crawl rules by default
 - **URL deduplication** — strips tracking params (UTM, fbclid, gclid, etc.)
 - **SQLite storage** — saves compressed raw HTML locally
-- **Content pipeline** — extracts clean text from raw HTML after crawling ⭐ NEW
-- **Classify pipeline** — identifies page types (blog, docs, landing page, etc.) ⭐ NEW
-- **PDF extraction** — pulls text content from PDF files found during crawl ⭐ NEW
-- **llms.txt generator** — produces compact and full-content output files ⭐ NEW
+- **Content pipeline** — extracts clean text from raw HTML after crawling
+- **Classify pipeline** — identifies page types (blog, docs, landing page, etc.)
+- **PDF extraction** — pulls text content from PDF files found during crawl
+- **llms.txt generator** — produces compact and full-content output files
+- **Live dashboard** — real-time crawl monitoring with content preview and export
 
 ---
 
-## ⚙️ Installation
+## Installation
 
 ```bash
-cd day2
 pip install -r requirements.txt
 
 # Install Playwright browser (needed for JS rendering)
@@ -75,15 +77,21 @@ playwright install chromium
 
 ---
 
-## 🧪 Usage
+## Usage
 
-### Step 1: Run the Crawler
+### Start the Dashboard
+
+```bash
+python dashboard/app.py
+```
+
+Then open your browser at **`http://localhost:8501`**
+
+### Run the Crawler
 
 ```bash
 python run_crawler.py --url https://example.com
 ```
-
-### With Options
 
 ```bash
 # Custom depth and page limit
@@ -102,26 +110,33 @@ python run_crawler.py --url https://example.com --db my_crawl.db
 python run_crawler.py --url https://example.com --no-playwright
 ```
 
-### Step 2: Generate llms.txt
+### Generate llms.txt
 
 ```bash
-# Generate both llms.txt and llms-full.txt
+# From terminal
 python generate_llmstxt.py --db crawl.db --out ./output
 
-# Validate an existing llms.txt
-python generate_llmstxt.py --db crawl.db --validate-only
+# Or use the Export Panel in the dashboard
 ```
 
-This produces two files:
+### Output Example
 
-| File | Description |
-|------|-------------|
-| `llms.txt` | Compact index of all crawled pages (titles + URLs) |
-| `llms-full.txt` | Full content of every crawled page for LLM ingestion |
+```
+# Example Site
+> Documentation and guides for Example Site
+
+## Getting Started
+https://example.com/getting-started
+A beginner's guide to getting started with Example Site.
+
+## API Reference
+https://example.com/api
+Full API reference documentation.
+```
 
 ---
 
-## 🔧 Configuration
+## Configuration
 
 Edit `config/default.yaml` to tune the crawler:
 
@@ -148,26 +163,9 @@ Use pre-built profiles from `config/profiles/`:
 
 ---
 
-## 🗄️ Storage
-
-Crawled and processed data is saved to a **SQLite database** (`crawl.db` by default). The schema is defined in `storage/schema.sql`.
-
-```bash
-python run_crawler.py --url https://example.com --db my_crawl.db
-python generate_llmstxt.py --db my_crawl.db --out ./output
-```
-
----
-
-## 📦 Tech Stack
+## Tech Stack
 
 - [Scrapy](https://scrapy.org/) — crawling framework
 - [Playwright](https://playwright.dev/python/) — headless browser for JS pages
 - [SQLite](https://www.sqlite.org/) — local storage
 - [PyYAML](https://pyyaml.org/) — configuration
-
----
-
-## 📄 License
-
-MIT
